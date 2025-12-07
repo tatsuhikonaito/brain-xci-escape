@@ -9,9 +9,9 @@ The study is described in the following paper. Please cite this paper if you use
 
 ## Overview
 
-1. `geomxtools.R` — Used for NanoString data profiling and quality control (QC).
-2. Other scripts — Used for differential gene expression analysis, pathway enrichment analysis, and visualization.
-
+1. DEG - Used for differential gene expression analysis.
+2. scLinaX — Used for Xi expression ratio estimation using scLinaX.
+3. Integration - Used for meta-analysis and integration of results.
 
 ## Contact
 
