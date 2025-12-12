@@ -1,5 +1,6 @@
 # Brain_XCI_escape
-This repository contains the scripts used in our study on XCI escape in the brain.
+This repository contains the scripts used in our study on XCI escape in the brain. For the scLinaX pipeline, please refer to the original repository: [scLinaX](https://github.com/ytomofuji/scLinaX).  
+
 
 ## Publication/Citation
 
@@ -9,9 +10,9 @@ The study is described in the following paper. Please cite this paper if you use
 
 ## Overview
 
-1. DEG - Used for differential gene expression analysis.
-2. scLinaX — Used for Xi expression ratio estimation using scLinaX.
-3. Integration - Used for meta-analysis and integration of results.
+1. DEG - Pseudobulk differential gene expression analysis.
+2. scDEG - Single-cell differential gene expression analysis.
+3. MAGMA - MAGMA gene-set enrichment analysis.
 
 ## Contact
 
