@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 7) {
-  stop("Usage: Rscript plot_NB_effect_on_UMAP.R COV RES CELL_TYPE_INFO UMAP UMI_Count GENE OUTNAME")
+  stop("Usage: Rscript plot_NB_UMAP.R COV RES CELL_TYPE_INFO UMAP UMI_Count GENE OUTNAME")
 }
 
 COV       <- args[1]
