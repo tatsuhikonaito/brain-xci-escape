@@ -1,5 +1,5 @@
 # Brain_XCI_escape
-This repository contains the scripts used in our study on XCI escape in the brain. For the scLinaX pipeline, please refer to the original repository: [scLinaX](https://github.com/ytomofuji/scLinaX).  
+This repository contains the scripts used in our study on XCI escape in the human brain using single-nucleus RNA-seq data. For the scLinaX pipeline, please refer to the original repository: [scLinaX](https://github.com/ytomofuji/scLinaX).  
 
 
 ## Publication/Citation
