@@ -1,16 +1,16 @@
-# Brain_XCI_escape
+# Brain XCI escape
 This repository contains the scripts used in our study on XCI escape in the human brain using single-nucleus RNA-seq data. For the scLinaX pipeline, please refer to the original repository: [scLinaX](https://github.com/ytomofuji/scLinaX).  
-An interactive resource for exploring evidence of X chromosome inactivation (XCI) escape across genes and brain cell types from this study is also available: [Brain XCI Escape Browser](xxx).
+An interactive resource for exploring evidence of X chromosome inactivation (XCI) escape across genes and brain cell types from this study is also available: [Brain XCI Escape Browser](https://naitot01.dmz.hpc.mssm.edu/brain-xci-escape-browser/).
 
 ## Publication/Citation
 
 The study is described in the following paper. Please cite this paper if you use any material in this repository.
 
-- xxx
+- Manuscript in preparation.
 
 ## Overview
 
-1. DEG - Pseudobulk differential gene expression analysis.
+1. DGE - Pseudobulk differential gene expression analysis.
 2. scDEG - Single-cell differential gene expression analysis.
 3. MAGMA - MAGMA gene-set enrichment analysis.
 
