@@ -53,10 +53,8 @@ meta <- readr::read_tsv(meta_file, show_col_types = FALSE) |>
 
 expr <- readr::read_tsv(expr_file, show_col_types = FALSE)
 
-# 全 gene を回すなら:
 gene_name <- colnames(expr)[-1]
-# 限定したいなら:
-# gene_name <- c("LAMP2", "DDX3X")
+# For selected genes: gene_name <- c("LAMP2", "DDX3X")
 
 # -----------------------------
 # Result containers
@@ -82,7 +80,6 @@ for (GENE in gene_name) {
     apply(!is.na(test_df[, list_covariates, drop = FALSE]), 1, all)
 
   test_df <- test_df[include, , drop = FALSE]
-  if (nrow(test_df) == 0L) next
 
   # ---------------------------
   # 1) Sex main effect
@@ -122,7 +119,7 @@ for (GENE in gene_name) {
       as_tibble(coef_df)
     )
     SEX_EXP_summary <- bind_rows(SEX_EXP_summary, tbl_out)
-  }, silent = TRUE)
+  })
 
   if (inherits(check, "try-error")) {
     lrt_df <- tibble(
@@ -195,7 +192,7 @@ for (GENE in gene_name) {
       as_tibble(coef_df2)
     )
     SEX_EXP_PCINT_summary <- bind_rows(SEX_EXP_PCINT_summary, tbl_out2)
-  }, silent = TRUE)
+  })
 
   if (inherits(check2, "try-error")) {
     lrt_df2 <- tibble(

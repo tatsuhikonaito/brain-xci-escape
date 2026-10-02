@@ -4,7 +4,7 @@
 # MAGMA gene / gene-set analysis on X chromosome
 #
 # - Input:
-#     * X-only GWAS summary stats (TSV, no header)
+#     * X-only GWAS summary stats (TSV; header controlled by HAS_HEADER)
 #     * MAGMA SNP location file for X (hg38)
 #     * MAGMA gene location file for X (hg38)
 #     * LD reference panel for X (bfile)
@@ -50,9 +50,15 @@ mkdir -p "${RESULTS_DIR}"
 ########################
 # Phenotype settings
 ########################
-PHENO="GCST90444373"
+PHENO="${1:-GCST90444373}"
 
-# --- phenotype-specific column mapping (no header TSV) ---
+# Column positions follow the source input layout; edit for other files.
+# HAS_HEADER=1 retains the original first-row skip; use 0 for headerless TSVs.
+HAS_HEADER=1
+P_COL=8
+RSID_COL=10
+
+# --- phenotype-specific column mapping ---
 # GCST90444373:
 #   8:p_value, 9:n, 10:rs_id
 # GCST90449045:
@@ -60,9 +66,12 @@ PHENO="GCST90444373"
 if [ "${PHENO}" = "GCST90444373" ]; then
   N=1152284
   N_COL=9
-else if [ "${PHENO}" = "GCST90449045" ]; then
+elif [ "${PHENO}" = "GCST90449045" ]; then
   N=870171
   N_COL=19
+else
+  echo "Unknown phenotype: ${PHENO}" >&2
+  exit 1
 fi
 
 
@@ -76,8 +85,8 @@ SS_MAGMA="${SS_DIR}/${PHENO}.MAGMA.txt"
 
 echo -e "SNP\tP\tN" > "${SS_MAGMA}"
 
-awk -F'\t' -v maxN="${N}" -v ncol="${N_COL}" -v pcol="${P_COL}" -v rscol="${RSID_COL}" '
-  NR > 1 {
+awk -F'\t' -v maxN="${N}" -v ncol="${N_COL}" -v pcol="${P_COL}" -v rscol="${RSID_COL}" -v header="${HAS_HEADER}" '
+  NR > header {
     snp = $rscol
     if (snp == "") next
     if (seen[snp]++) next

@@ -1,20 +1,20 @@
 # Celltype-Resolved Brain XCI escape
-This repository contains representative analysis scripts for our study of XCI escape in the human brain using single-nucleus RNA-seq and bulk microglial RNA-seq data. Study-specific input files and software environments are required to reproduce the original analyses. For the scLinaX pipeline, please refer to the original repository: [scLinaX](https://github.com/ytomofuji/scLinaX).  
-An interactive resource for exploring evidence of X chromosome inactivation (XCI) escape across genes and brain cell types from this study is also available: [Brain XCI Escape Browser](https://brain-xci-escape.dmz.hpc.mssm.edu/).
 
-## Publication/Citation
+Representative analysis code for our study of XCI escape in the human brain using single-nucleus RNA-seq and bulk microglial RNA-seq data. Paths and input files should be adapted to the local data.
 
-The study is described in the following paper. Please cite this paper if you use any material in this repository.
+For the scLinaX pipeline, see [scLinaX](https://github.com/ytomofuji/scLinaX). Results can be explored in the [Brain XCI Escape Browser](https://brain-xci-escape.dmz.hpc.mssm.edu/).
 
-- Manuscript in preparation.
+## Analyses
 
-## Overview
+- [DGE](DGE/README.md): Pseudobulk differential gene expression.
+- [scDGE](scDGE/README.md): Single-cell negative-binomial models.
+- [MAGMA](MAGMA/README.md): Gene-set enrichment analysis.
+- [bulk_microglia](bulk_microglia/README.md): MiGA differential expression, XCIR and meta-analysis.
 
-1. DGE - Pseudobulk differential gene expression analysis.
-2. scDGE - Single-cell differential gene expression analysis.
-3. MAGMA - MAGMA gene-set enrichment analysis.
-4. [bulk_microglia](bulk_microglia/README.md) - MiGA bulk differential expression, XCIR, and gene-level meta-analysis.
+## Publication
+
+Manuscript in preparation.
 
 ## Contact
 
-For any questions, please contact Tatsuhiko Naito (tatsuhiko.naito [at] mssm.edu)
+Tatsuhiko Naito (tatsuhiko.naito [at] mssm.edu)

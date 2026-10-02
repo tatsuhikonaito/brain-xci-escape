@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 # =========================================
-# Paths / settings (match gene.loc script style)
+# Paths / settings
 # =========================================
 BASE_DIR = Path("/path/to/XCI_project")
 os.chdir(BASE_DIR)
@@ -21,12 +21,10 @@ OUT_GENESETS = BASE_DIR / "MAGMA/data/magma_genesets.txt"
 GENE_COL = "Gene"
 CELLTYPE_COL = "Cell type"
 STATUS_COL = "Annotation of XCI status"
-FDR_META_COL = "FDR (ROSMAP_MIT_ROSMAP)"
 XI_META_COL = "Ratio of the expression from Xi (ROSMAP_MIT_ROSMAP)"
 
 CELLTYPES = ["Ast", "Exc", "Inh", "Mic", "Oli", "OPC"]
 
-FDR_THR = 0.05
 XI_THR = 0.1
 
 
@@ -49,7 +47,6 @@ def load_symbol_to_id(gene_loc_path: Path) -> dict[str, int]:
 
 def add_evidence_flags(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-    df["deg_sig"] = df[FDR_META_COL].notna() & (df[FDR_META_COL] < FDR_THR)
     df["xi_measured"] = df[XI_META_COL].notna()
     df["xi_escape"] = df["xi_measured"] & (df[XI_META_COL] > XI_THR)
     return df

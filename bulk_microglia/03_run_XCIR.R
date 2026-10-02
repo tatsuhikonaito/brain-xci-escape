@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-# Single-sample XCIR. Defaults match the study's run_XCIR.sh invocation.
+# Single-sample XCIR analysis.
 suppressPackageStartupMessages({
   library(optparse)
   library(data.table)
@@ -24,23 +24,13 @@ write_tab <- function(dt, name) {
   write.table(dt, con, sep = "\t", quote = FALSE, row.names = FALSE)
 }
 
-# Recompute on each invocation; an old result must not silently bypass new settings.
 snp_dt <- readVCF4(opt$vcf)
 if ("CHROM" %in% names(snp_dt)) snp_dt[, CHROM := gsub("^chr", "", CHROM)]
-write_tab(snp_dt, "snp_dt.tsv.gz")
 
 anno_dt <- annotateX(snp_dt, read_count_cutoff = opt$read_count_cutoff,
                      het_cutoff = opt$het_cutoff, release = opt$release)
-write_tab(anno_dt, "anno_dt.tsv.gz")
 
 genic_dt <- getGenicDP(anno_dt, highest_expr = TRUE)
-write_tab(genic_dt, "genic_dt.tsv.gz")
 
 bb_dt <- betaBinomXI(genic_dt, model = opt$model)
 write_tab(bb_dt, "betaBinomXI_results.tsv.gz")
-
-samp_dt <- sample_clean(bb_dt)
-write_tab(samp_dt, "sample_clean.tsv.gz")
-capture.output(opt, sessionInfo(), packageDescription("XCIR"),
-               file = file.path(opt$outdir, "run_info.txt"))
-# No getXCIstate(): the study summary uses tau / var_tau from betaBinomXI.

@@ -32,7 +32,6 @@ keys <- read_tsv(key_path, show_col_types = FALSE) %>%
             participant_id = as.character(participant_id),
             region = as.character(region)) %>%
   distinct()
-if (anyDuplicated(keys$sample_id)) stop("Conflicting sample_id rows in sample_key")
 
 metadata <- read_tsv(meta_path, show_col_types = FALSE)
 
@@ -97,7 +96,7 @@ data$Cohort <- factor(data$Cohort)
 data$region <- factor(data$region, levels = c("MFG", "STG", "SVZ", "THA", "CC", "CER", "HIP", "OCC", "SN"))
 data$participant_id <- factor(data$participant_id)
 
-# Count rounding, normalization and expression filtering match the study code.
+# Normalize and filter low-expression genes.
 dge <- DGEList(counts = round(counts))
 dge <- calcNormFactors(dge)
 
@@ -148,9 +147,3 @@ res_main <- topTable(fit, coef = "SexFemale", number = Inf, sort.by = "P") %>%
   tibble::rownames_to_column("gene")
 
 write.table(res_main, gzfile(outfile_main), quote = FALSE, sep = "\t", row.names = FALSE)
-
-
-# Save the retained design and software versions without changing the fit.
-write.table(data, gzfile(file.path(dir_out, paste0(base_out, ".design.tsv.gz"))),
-            quote = FALSE, sep = "\t", row.names = FALSE)
-capture.output(sessionInfo(), file = file.path(dir_out, paste0(base_out, ".sessionInfo.txt")))

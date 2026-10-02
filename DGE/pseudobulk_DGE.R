@@ -8,10 +8,10 @@ suppressPackageStartupMessages({
 })
 
 ## =========================================
-## Script: pseudobulk_DEG.R
+## Script: pseudobulk_DGE.R
 ##
 ## Usage:
-##   Rscript pseudobulk_DEG.R \
+##   Rscript pseudobulk_DGE.R \
 ##       <cohort> <celltype> <analysis> <pheno_definition> [adjust_batch]
 ##
 ##   cohort:
@@ -283,7 +283,7 @@ run_pseudobulk_sex_deseq <- function(genes_counts,
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 4) {
-  stop("Usage: Rscript pseudobulk_DEG.R <cohort> <celltype> <analysis> <pheno_definition> [adjust_batch]")
+  stop("Usage: Rscript pseudobulk_DGE.R <cohort> <celltype> <analysis> <pheno_definition> [adjust_batch]")
 }
 
 cohort           <- as.character(args[1])
@@ -512,9 +512,7 @@ if (analysis == "pheno") {
     dir_base          = dir_base,
     adjust_batch      = adjust_batch
   )
-}
-
-else if (analysis == "sex") {
+} else if (analysis == "sex") {
   run_pseudobulk_sex_deseq(
     genes_counts      = genes_counts,
     clinical_filtered = clinical_filtered,
