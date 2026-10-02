@@ -1,8 +1,7 @@
 # Celltype-Resolved Brain XCI escape
 
-Representative analysis code for our study of XCI escape in the human brain using single-nucleus RNA-seq and bulk microglial RNA-seq data. Paths and input files should be adapted to the local data.
-
-For the scLinaX pipeline, see [scLinaX](https://github.com/ytomofuji/scLinaX). Results can be explored in the [Brain XCI Escape Browser](https://brain-xci-escape.dmz.hpc.mssm.edu/).
+This repository contains the representative analysis code for our study on X-chromosome inactivation (XCI) escape in the human brain using single-nucleus RNA-seq data. For the scLinaX pipeline, please refer to the original repository: [scLinaX](https://github.com/ytomofuji/scLinaX).  
+An interactive resource for exploring evidence of XCI escape across genes and brain cell types from this study is available: [Brain XCI Escape Browser](https://brain-xci-escape.dmz.hpc.mssm.edu/).
 
 ## Analyses
 
