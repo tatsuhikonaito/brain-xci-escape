@@ -11,7 +11,7 @@ The study is described in the following paper. Please cite this paper if you use
 ## Overview
 
 1. DGE - Pseudobulk differential gene expression analysis.
-2. scDEG - Single-cell differential gene expression analysis.
+2. scDGE - Single-cell differential gene expression analysis.
 3. MAGMA - MAGMA gene-set enrichment analysis.
 
 ## Contact
