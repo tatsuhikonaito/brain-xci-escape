@@ -5,10 +5,12 @@ An interactive resource for exploring evidence of XCI escape across genes and br
 
 ## Analyses
 
-- [DGE](DGE/README.md): Pseudobulk differential gene expression.
-- [scDGE](scDGE/README.md): Single-cell negative-binomial models.
-- [MAGMA](MAGMA/README.md): Gene-set enrichment analysis.
-- [bulk_microglia](bulk_microglia/README.md): MiGA differential expression, XCIR and meta-analysis.
+## Analyses
+
+- [DGE](DGE/): Pseudobulk differential gene expression.
+- [scDGE](scDGE/): Single-cell negative-binomial models.
+- [MAGMA](MAGMA/): Gene-set enrichment analysis.
+- [bulk_microglia](bulk_microglia/): MiGA differential expression, XCIR and meta-analysis.
 
 ## Publication
 
