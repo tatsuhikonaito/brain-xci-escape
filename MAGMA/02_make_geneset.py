@@ -10,12 +10,14 @@ BASE_DIR = Path("/path/to/XCI_project")
 os.chdir(BASE_DIR)
 
 SUMMARY_PATH = Path("/path/to/summary")
+MICROGLIA_SUMMARY_PATH = Path("/path/to/summary_df.microglia.txt")
 
 REF_DIR = Path("/path/to/magma_ref")
 OUT_GENE_LOC = REF_DIR / "gencode.v38.chrX.MAGMA.gene.loc"
 
 # Output: MAGMA gene-set file (.sets)
 OUT_GENESETS = BASE_DIR / "MAGMA/data/magma_genesets.txt"
+OUT_MICROGLIA_GENESETS = BASE_DIR / "MAGMA/data/magma_genesets.microglia_xcir_only.sets"
 
 # Columns in summary_df
 GENE_COL = "Gene"
@@ -26,6 +28,7 @@ XI_META_COL = "Ratio of the expression from Xi (ROSMAP_MIT_ROSMAP)"
 CELLTYPES = ["Ast", "Exc", "Inh", "Mic", "Oli", "OPC"]
 
 XI_THR = 0.1
+XCIR_PADJ_THR = 0.05
 
 
 # =========================================
@@ -57,6 +60,14 @@ def genes_to_magma_ids(gene_symbols: set[str], symbol_to_id: dict[str, int]) -> 
     return ids
 
 
+def write_genesets(genesets: dict[str, list[int]], out_path: Path) -> None:
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w") as out:
+        for set_name in sorted(genesets):
+            out.write(set_name + "\t" + "\t".join(map(str, genesets[set_name])) + "\n")
+    print(f"[DONE] wrote {len(genesets)} gene sets -> {out_path}")
+
+
 # =========================================
 # Main
 # =========================================
@@ -73,7 +84,7 @@ def main() -> None:
 
     genesets: dict[str, list[int]] = {}
 
-    # ----- per-cell-type: xi_or_annotEscape_{ct} -----
+    # ----- per-cell-type escape and non-escape sets -----
     for ct in CELLTYPES:
         sub = df[df[CELLTYPE_COL] == ct].copy()
         if sub.empty:
@@ -83,27 +94,56 @@ def main() -> None:
         genes_xi_escape = set(sub.loc[sub["xi_escape"], GENE_COL].dropna().astype(str))
 
         genes_xi_or_annot = genes_xi_escape.union(genes_annot_escape)
-        ids = genes_to_magma_ids(genes_xi_or_annot, symbol_to_id)
+        ct_all_mappable = {g for g in sub[GENE_COL].unique() if g in symbol_to_id}
+        genes_not_xi_or_annot = ct_all_mappable.difference(genes_xi_or_annot)
 
+        for name, genes in [
+            (f"xi_or_annotEscape_{ct}", genes_xi_or_annot),
+            (f"not_xi_or_annotEscape_{ct}", genes_not_xi_or_annot),
+        ]:
+            ids = genes_to_magma_ids(genes, symbol_to_id)
+            if ids:
+                genesets[name] = ids
+
+    write_genesets(genesets, OUT_GENESETS)
+
+    # ----- bulk microglia, analyzed separately from the snRNA-seq Mic sets -----
+    mic = pd.read_csv(MICROGLIA_SUMMARY_PATH, sep="\t")
+    mic = mic[mic[GENE_COL] != "XIST"].copy()
+    mic[GENE_COL] = mic[GENE_COL].astype("string")
+    mic = mic[mic[GENE_COL].notna()].copy()
+    for col in ["XCIR_padj_meta", "XCIR_rho_mean"]:
+        mic[col] = pd.to_numeric(mic[col], errors="coerce")
+
+    mic["xi_escape_mic"] = (
+        mic["XCIR_padj_meta"].notna()
+        & mic["XCIR_rho_mean"].notna()
+        & (mic["XCIR_padj_meta"] < XCIR_PADJ_THR)
+        & (mic["XCIR_rho_mean"] > XI_THR)
+    )
+    mic["annot_escape"] = mic["XCI_status"].astype("string").eq("nonPAR_escape")
+
+    # Retain any-row support when a gene has multiple rows, as in the source analysis.
+    gene_flags = (
+        mic.groupby(GENE_COL, dropna=True)[["xi_escape_mic", "annot_escape"]]
+        .max()
+        .reset_index()
+    )
+    all_genes_mic = set(gene_flags[GENE_COL].astype(str))
+    genes_xi_mic = set(gene_flags.loc[gene_flags["xi_escape_mic"], GENE_COL].astype(str))
+    genes_annot_mic = set(gene_flags.loc[gene_flags["annot_escape"], GENE_COL].astype(str))
+    genes_escape_mic = genes_xi_mic.union(genes_annot_mic)
+
+    mic_genesets: dict[str, list[int]] = {}
+    for name, genes in [
+        ("xi_or_annotEscape_Mic", genes_escape_mic),
+        ("not_xi_or_annotEscape_Mic", all_genes_mic.difference(genes_escape_mic)),
+    ]:
+        ids = genes_to_magma_ids(genes, symbol_to_id)
         if ids:
-            genesets[f"xi_or_annotEscape_{ct}"] = ids
+            mic_genesets[name] = ids
 
-    # ----- anyCT: xi_or_annotEscape_anyCT -----
-    genes_annot_escape_any = set(df.loc[df[STATUS_COL] == "nonPAR escape", GENE_COL].dropna().astype(str))
-    genes_xi_escape_any = set(df.loc[df["xi_escape"], GENE_COL].dropna().astype(str))
-
-    genes_xi_or_annot_any = genes_xi_escape_any.union(genes_annot_escape_any)
-    ids_any = genes_to_magma_ids(genes_xi_or_annot_any, symbol_to_id)
-    if ids_any:
-        genesets["xi_or_annotEscape_anyCT"] = ids_any
-
-    # Write MAGMA .sets (no header)
-    OUT_GENESETS.parent.mkdir(parents=True, exist_ok=True)
-    with open(OUT_GENESETS, "w") as out:
-        for set_name in sorted(genesets.keys()):
-            out.write(set_name + "\t" + "\t".join(map(str, genesets[set_name])) + "\n")
-
-    print(f"[DONE] wrote {len(genesets)} gene sets -> {OUT_GENESETS}")
+    write_genesets(mic_genesets, OUT_MICROGLIA_GENESETS)
 
 
 if __name__ == "__main__":

@@ -51,7 +51,7 @@ def build_gene_df(gtf_path: Path) -> pd.DataFrame:
 
     # Keep one entry per gene symbol
     df = df.drop_duplicates(subset=["SYMBOL"], keep="first").sort_values(
-        ["CHR", "START", "END"]
+        ["CHR", "START"]
     )
     df = df.reset_index(drop=True)
     return df

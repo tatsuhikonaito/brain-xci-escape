@@ -42,6 +42,7 @@ SNP_LOC="${REF_DIR}/magma_X.snploc.txt"
 
 # Gene set file (MAGMA set annotation format)
 GENESET_FILE="${BASE_DIR}/MAGMA/data/magma_genesets.txt"
+MICROGLIA_GENESET_FILE="${BASE_DIR}/MAGMA/data/magma_genesets.microglia_xcir_only.sets"
 
 # Output directory
 RESULTS_DIR="${BASE_DIR}/MAGMA/results"
@@ -136,3 +137,10 @@ GENESET_OUT_NONPAR="${RESULTS_DIR}/${PHENO}.magma_X_geneset.nonPAR"
   --set-annot "${GENESET_FILE}" \
   --out "${GENESET_OUT_NONPAR}"
 
+# Bulk microglia: reuse the same gene-analysis results with the XCIR-based gene sets.
+MICROGLIA_GENESET_OUT="${RESULTS_DIR}/${PHENO}.magma_X_geneset.microglia_xcir_only.nonPAR"
+
+"${MAGMA_BIN}" \
+  --gene-results "${GENE_OUT_NONPAR}.genes.raw" \
+  --set-annot "${MICROGLIA_GENESET_FILE}" \
+  --out "${MICROGLIA_GENESET_OUT}"
