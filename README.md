@@ -5,8 +5,6 @@ An interactive resource for exploring evidence of XCI escape across genes and br
 
 ## Analyses
 
-## Analyses
-
 - [DGE](DGE/): Pseudobulk differential gene expression.
 - [scDGE](scDGE/): Single-cell negative-binomial models.
 - [MAGMA](MAGMA/): Gene-set enrichment analysis.
