@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-# NB-based sex association test (MIT_ROSMAP)
+# Negative-binomial mixed models for sex-associated expression.
 
 suppressPackageStartupMessages({
   library(lme4)
@@ -11,22 +11,16 @@ suppressPackageStartupMessages({
 # -----------------------------
 # Settings
 # -----------------------------
-cohort   <- "MIT_ROSMAP"
-base_dir <- "/path/to/XCI"   # <-- change here
+# Set input and output paths; run from the repository root.
+meta_file   <- "/path/to/scDGE/metadata.txt.gz"
+expr_file   <- "/path/to/scDGE/expression.chrX.txt.gz"
+samples_file <- "/path/to/scDGE/sample_list.pseudobulk.txt"
+outprefix   <- "/path/to/scDGE/results/scDGE"
+dir.create(dirname(outprefix), showWarnings = FALSE, recursive = TRUE)
 
-meta_file <- file.path(base_dir, cohort, "data",
-                       paste0(cohort, ".metadata.txt.gz"))
-expr_file <- file.path(base_dir, cohort, "data",
-                       paste0(cohort, ".expression.chrX.txt.gz"))
-out_dir   <- file.path(base_dir, cohort, "NB", "results")
-dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+samples <- readLines(samples_file)
 
-samples <- readLines(
-  file.path(base_dir, cohort, "data",
-            paste0("sample_list.", cohort, ".pseudobulk.txt"))
-)
-
-# covariates used in the NB model (MIT_ROSMAP)
+# Covariates used in the NB model
 list_covariates <- c(
   "age", "pmi", "cogdx", "apoe4", "Study", "nUMI",
   stringr::str_c("oriPC_", 1:10)
@@ -222,8 +216,6 @@ for (GENE in gene_name) {
 
   rm(test_df)
 }
-
-outprefix <- file.path(out_dir, cohort)
 
 readr::write_tsv(
   SEX_EXP_summary,

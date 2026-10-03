@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare MIT_ROSMAP per-cell covariates for NB regression.
-
-Set XCI_BASE_DIR and BIGBRAIN_BASE_DIR before running from the repository root.
-Input: raw-count MITROSMAP.h5ad and data/ROSMAP_clinical.csv.
-Output: MIT_ROSMAP/data/MIT_ROSMAP.metadata.txt.gz under XCI_BASE_DIR.
-"""
+"""Prepare per-cell covariates for negative-binomial regression."""
 
 import os
 import numpy as np
@@ -15,27 +10,13 @@ import scipy.sparse as sp
 
 
 def main():
-    # Settings (MIT_ROSMAP only)
-    cohort = "MIT_ROSMAP"
+    # Input and output paths (run from the repository root).
+    adata_path = "/path/to/raw_counts.h5ad"
+    clinical_path = "/path/to/clinical.csv"
+    out_path = "/path/to/scDGE/metadata.txt.gz"
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
-    xci_base_dir = os.environ.get("XCI_BASE_DIR")
-    bigbrain_base_dir = os.environ.get("BIGBRAIN_BASE_DIR")
-
-    if xci_base_dir is None:
-        raise RuntimeError("Please set XCI_BASE_DIR environment variable.")
-    if bigbrain_base_dir is None:
-        raise RuntimeError("Please set BIGBRAIN_BASE_DIR environment variable.")
-
-    base_dir = os.path.join(xci_base_dir, cohort)
-    data_dir = os.path.join(bigbrain_base_dir, cohort)
-
-    os.makedirs(os.path.join(base_dir, "data"), exist_ok=True)
-    os.chdir(base_dir)
-
-    # Read raw AnnData (MITROSMAP.h5ad)
-    adata_path = os.path.join(
-        data_dir, "analysis/snRNAseq/scanpy", "MITROSMAP.h5ad"
-    )
+    # Read raw counts.
     if not os.path.exists(adata_path):
         raise FileNotFoundError(f"h5ad file not found: {adata_path}")
 
@@ -107,7 +88,6 @@ def main():
     metadata = metadata.reset_index()
 
     # Merge with clinical metadata
-    clinical_path = os.path.join(base_dir, "data", "ROSMAP_clinical.csv")
     if not os.path.exists(clinical_path):
         raise FileNotFoundError(f"Clinical file not found: {clinical_path}")
 
@@ -162,7 +142,6 @@ def main():
     )
 
     # Save metadata for NB
-    out_path = os.path.join(base_dir, "data", f"{cohort}.metadata.txt.gz")
     metadata.to_csv(out_path, sep="\t", index=True, compression="gzip")
     print(f"Saved metadata to: {out_path}")
 

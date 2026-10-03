@@ -7,47 +7,17 @@ suppressPackageStartupMessages({
   library(sva)
 })
 
-## =========================================
-## Script: pseudobulk_DGE.R
-##
-## Usage:
-##   Rscript pseudobulk_DGE.R \
-##       <cohort> <celltype> <analysis> <pheno_definition> [adjust_batch]
-##
-##   cohort:
-##     - "MIT_ROSMAP"
-##     - "ROSMAP"
-##     - "SEA_AD"
-##
-##   celltype:
-##     - e.g. "MG", "Ast", "all"
-##
-##   analysis:
-##     - "pheno"  : run pheno-based DEG only
-##     - "sex"    : run sex effect (fsex) only
-##
-##   pheno_definition (used only when analysis includes "pheno"):
-##     - MIT_ROSMAP / ROSMAP:
-##         "AD_else", "AD_NCI", "ADMCI_NCI"
-##     - SEA_AD:
-##         "AD_else", "AD_NCI"
-##
-##   adjust_batch (optional):
-##     - TRUE/FALSE (default TRUE)
-##
-## Required environment variables:
-##   XCI_BASE_DIR      : base dir for XCI project (cohort subdirs inside)
-##   BIGBRAIN_BASE_DIR : base dir for bigbrain data (cohort subdirs inside)
-##
-## Optional environment variables:
-##   SEA_AD_METADATA_PATH  : path to SEA-AD_individual_metadata.csv
-##   ROSMAP_CLINICAL_PATH  : path to ROSMAP_clinical.csv
-##
-## Output examples:
-##   <dir_base>/DEG/results/
-##     <cohort>_<celltype>.<test>.DEG.<pheno_def>.<sex_group>.pseudobulk.DESeq2[.sva].txt.gz
-##     <cohort>_<celltype>.<test>.DEG_sex.pseudobulk.DESeq2[.sva].txt.gz
-## =========================================
+# Usage: Rscript DGE/pseudobulk_DGE.R counts.RData clinical.csv outprefix sex|pheno [pheno_definition] [adjust_batch]
+# Run from the repository root. The count file contains genes_counts for one cell type.
+
+# Clinical metadata format: "cogdx" or "diagnosis".
+# cogdx: msex, cogdx, age_death, apoe_genotype, pmi, Study, individualID.
+# diagnosis: sex, diagnosis, ageDeath, apoe4Status, pmi, individualID.
+clinical_format <- "cogdx"
+
+# Optional additional analysis excluding overlapping participants.
+# Supply one retained individualID per line; leave empty to run all samples only.
+nonoverlapping_samples_file <- ""
 
 ## -----------------------------
 ## Helper: pheno-based DEG
@@ -57,10 +27,9 @@ run_pseudobulk_pheno_deseq <- function(genes_counts,
                                        clinical_filtered,
                                        covariates_base,
                                        tests,
-                                       cohort,
-                                       celltype,
+                                       outprefix,
+                                       nonoverlapping_samples_file,
                                        pheno_definition,
-                                       dir_base,
                                        adjust_batch = TRUE) {
   for (test in tests) {
     for (sex_group in c("male", "female", "both_sexes")) {
@@ -70,14 +39,14 @@ run_pseudobulk_pheno_deseq <- function(genes_counts,
       if (test == "all") {
         include <- !is.na(clinical_filtered$fsex) &
           apply(!is.na(clinical_filtered[, c(covariates, "pheno"), drop = FALSE]), 1, all)
-      } else if (test == "notin_MIT_ROSMAP") {
-        samples_notin_other <- scan(
-          file.path("data", "sample_list.ROSMAP.notin_MIT_ROSMAP.tsv"),
+      } else if (test == "nonoverlapping") {
+        samples_nonoverlapping <- scan(
+          nonoverlapping_samples_file,
           what = character(), quiet = TRUE
         )
         include <- !is.na(clinical_filtered$fsex) &
           apply(!is.na(clinical_filtered[, c(covariates, "pheno"), drop = FALSE]), 1, all) &
-          clinical_filtered$individualID %in% samples_notin_other
+          clinical_filtered$individualID %in% samples_nonoverlapping
       } else {
         stop("Unknown test: ", test)
       }
@@ -151,22 +120,14 @@ run_pseudobulk_pheno_deseq <- function(genes_counts,
       }
 
       if (adjust_batch) {
-        outfile <- file.path(
-          dir_base, "DEG", "results",
-          paste0(
-            cohort, "_", celltype, ".", test,
-            ".DEG.", pheno_definition, ".", sex_group,
-            ".pseudobulk.DESeq2.sva.txt.gz"
-          )
+        outfile <- paste0(
+          outprefix, ".", test, ".DEG.", pheno_definition, ".", sex_group,
+          ".pseudobulk.DESeq2.sva.txt.gz"
         )
       } else {
-        outfile <- file.path(
-          dir_base, "DEG", "results",
-          paste0(
-            cohort, "_", celltype, ".", test,
-            ".DEG.", pheno_definition, ".", sex_group,
-            ".pseudobulk.DESeq2.txt.gz"
-          )
+        outfile <- paste0(
+          outprefix, ".", test, ".DEG.", pheno_definition, ".", sex_group,
+          ".pseudobulk.DESeq2.txt.gz"
         )
       }
 
@@ -185,9 +146,8 @@ run_pseudobulk_sex_deseq <- function(genes_counts,
                                      clinical_filtered,
                                      covariates_base,
                                      tests,
-                                     cohort,
-                                     celltype,
-                                     dir_base,
+                                     outprefix,
+                                     nonoverlapping_samples_file,
                                      adjust_batch = TRUE) {
   for (test in tests) {
     covariates <- covariates_base
@@ -196,14 +156,14 @@ run_pseudobulk_sex_deseq <- function(genes_counts,
     if (test == "all") {
       include <- !is.na(clinical_filtered$fsex) &
         apply(!is.na(clinical_filtered[, covariates, drop = FALSE]), 1, all)
-    } else if (test == "notin_MIT_ROSMAP") {
-      samples_notin_other <- scan(
-        file.path("data", "sample_list.ROSMAP.notin_MIT_ROSMAP.tsv"),
+    } else if (test == "nonoverlapping") {
+      samples_nonoverlapping <- scan(
+        nonoverlapping_samples_file,
         what = character(), quiet = TRUE
       )
       include <- !is.na(clinical_filtered$fsex) &
         apply(!is.na(clinical_filtered[, covariates, drop = FALSE]), 1, all) &
-        clinical_filtered$individualID %in% samples_notin_other
+        clinical_filtered$individualID %in% samples_nonoverlapping
     } else {
       stop("Unknown test: ", test)
     }
@@ -254,20 +214,12 @@ run_pseudobulk_sex_deseq <- function(genes_counts,
     res_fsex_df <- as.data.frame(res_fsex)
 
     if (adjust_batch) {
-      outfile <- file.path(
-        dir_base, "DEG", "results",
-        paste0(
-          cohort, "_", celltype, ".", test,
-          ".DEG_sex.pseudobulk.DESeq2.sva.txt.gz"
-        )
+      outfile <- paste0(
+        outprefix, ".", test, ".DEG_sex.pseudobulk.DESeq2.sva.txt.gz"
       )
     } else {
-      outfile <- file.path(
-        dir_base, "DEG", "results",
-        paste0(
-          cohort, "_", celltype, ".", test,
-          ".DEG_sex.pseudobulk.DESeq2.txt.gz"
-        )
+      outfile <- paste0(
+        outprefix, ".", test, ".DEG_sex.pseudobulk.DESeq2.txt.gz"
       )
     }
 
@@ -283,55 +235,37 @@ run_pseudobulk_sex_deseq <- function(genes_counts,
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) < 4) {
-  stop("Usage: Rscript pseudobulk_DGE.R <cohort> <celltype> <analysis> <pheno_definition> [adjust_batch]")
+  stop("Usage: Rscript DGE/pseudobulk_DGE.R <counts_file> <clinical_file> <outprefix> <analysis> [pheno_definition] [adjust_batch]")
 }
 
-cohort           <- as.character(args[1])
-celltype         <- as.character(args[2])
-analysis         <- as.character(args[3])  # "pheno", "sex"
-pheno_definition <- as.character(args[4])
-adjust_batch     <- if (length(args) >= 5) as.logical(args[5]) else TRUE
+counts_file      <- as.character(args[1])
+clinical_file    <- as.character(args[2])
+outprefix        <- as.character(args[3])
+analysis         <- as.character(args[4])  # "pheno", "sex"
+pheno_definition <- if (length(args) >= 5) as.character(args[5]) else "AD_NCI"
+adjust_batch     <- if (length(args) >= 6) as.logical(args[6]) else TRUE
 
-if (!cohort %in% c("MIT_ROSMAP", "ROSMAP", "SEA_AD")) {
-  stop("Unknown cohort: ", cohort)
+if (!clinical_format %in% c("cogdx", "diagnosis")) {
+  stop("Unknown clinical_format: ", clinical_format)
 }
 if (!analysis %in% c("pheno", "sex")) {
   stop("analysis must be one of: pheno or sex")
 }
 
-xci_base      <- Sys.getenv("XCI_BASE_DIR")
-bigbrain_base <- Sys.getenv("BIGBRAIN_BASE_DIR")
-if (xci_base == "" || bigbrain_base == "") {
-  stop("Please set XCI_BASE_DIR and BIGBRAIN_BASE_DIR environment variables.")
-}
+tests <- if (nonoverlapping_samples_file != "") c("all", "nonoverlapping") else "all"
 
-dir_base <- file.path(xci_base, cohort)
-dir_data <- file.path(bigbrain_base, cohort)
-setwd(dir_base)
-
-tests <- if (cohort == "ROSMAP") c("all", "notin_MIT_ROSMAP") else "all"
-
-message("Cohort: ", cohort)
-message("Cell type: ", celltype)
+message("Counts: ", counts_file)
+message("Clinical metadata: ", clinical_file)
 message("Analysis: ", analysis)
-message("Pheno definition: ", pheno_definition, " (used only if analysis includes pheno)")
+message("Pheno definition: ", pheno_definition, " (used only for pheno)")
 message("Adjust batch (SVA): ", adjust_batch)
-message("XCI base dir: ", dir_base)
-message("Data dir: ", dir_data)
 
 ## =============================
 ## Clinical data loading
 ## =============================
 
-if (cohort == "MIT_ROSMAP" || cohort == "ROSMAP") {
-  rosmap_clinical_path <- Sys.getenv("ROSMAP_CLINICAL_PATH")
-  if (rosmap_clinical_path == "") {
-    rosmap_clinical_path <- file.path(
-      bigbrain_base, "ROSMAP", "metadata", "ROSMAP_clinical.csv"
-    )
-  }
-  message("Clinical file (ROSMAP-based): ", rosmap_clinical_path)
-  clinical <- read_csv(rosmap_clinical_path, show_col_types = FALSE)
+if (clinical_format == "cogdx") {
+  clinical <- read_csv(clinical_file, show_col_types = FALSE)
 
   clinical$cogdx <- as.character(clinical$cogdx)
   clinical <- clinical %>%
@@ -349,15 +283,8 @@ if (cohort == "MIT_ROSMAP" || cohort == "ROSMAP") {
     )
 }
 
-if (cohort == "SEA_AD") {
-  sea_ad_meta_path <- Sys.getenv("SEA_AD_METADATA_PATH")
-  if (sea_ad_meta_path == "") {
-    sea_ad_meta_path <- file.path(
-      xci_base, "SEA_AD", "data", "SEA-AD_individual_metadata.csv"
-    )
-  }
-  message("Clinical file (SEA_AD): ", sea_ad_meta_path)
-  clinical <- read_csv(sea_ad_meta_path, show_col_types = FALSE)
+if (clinical_format == "diagnosis") {
+  clinical <- read_csv(clinical_file, show_col_types = FALSE)
 
   clinical <- clinical %>%
     mutate(
@@ -374,14 +301,7 @@ if (cohort == "SEA_AD") {
 ## =============================
 
 message("Loading pseudobulk data...")
-if (celltype == "all") {
-  load(file.path("pseudobulk", paste0(cohort, "_all_RNA_pseudobulk_EUR.RData")))
-} else {
-  load(file.path(
-    dir_data, "analysis", "snRNAseq", "seurat",
-    paste0(cohort, "_", celltype, "_RNA_psuedobulk_EUR.RData")
-  ))
-}
+load(counts_file)
 
 gene_names   <- as.vector(genes_counts[[1]])
 genes_counts <- as.matrix(genes_counts[, -1, drop = FALSE])
@@ -397,10 +317,10 @@ clinical_filtered <- clinical_filtered[
 ]
 
 ## =============================
-## Cohort-specific formatting
+## Clinical metadata formatting
 ## =============================
 
-if (cohort == "MIT_ROSMAP" || cohort == "ROSMAP") {
+if (clinical_format == "cogdx") {
   clinical_filtered$cogdx     <- as.character(clinical_filtered$cogdx)
   clinical_filtered$Study     <- as.character(clinical_filtered$Study)
   clinical_filtered$age_death <- as.numeric(
@@ -425,7 +345,7 @@ if (cohort == "MIT_ROSMAP" || cohort == "ROSMAP") {
         ifelse(clinical_filtered$cogdx %in% "1", 0, NA)
       )
     } else {
-      stop("Unknown pheno definition for MIT_ROSMAP/ROSMAP: ", pheno_definition)
+      stop("Unknown pheno definition for cogdx metadata: ", pheno_definition)
     }
   }
 
@@ -435,7 +355,7 @@ if (cohort == "MIT_ROSMAP" || cohort == "ROSMAP") {
   }
 }
 
-if (cohort == "SEA_AD") {
+if (clinical_format == "diagnosis") {
   clinical_filtered$ageDeath <- as.numeric(
     gsub("90\\+", "90", clinical_filtered$ageDeath)
   )
@@ -479,7 +399,7 @@ if (cohort == "SEA_AD") {
         ifelse(clinical_filtered$pheno %in% "control", 0, NA)
       )
     } else {
-      stop("Unknown pheno definition for SEA_AD: ", pheno_definition)
+      stop("Unknown pheno definition for diagnosis metadata: ", pheno_definition)
     }
   }
 
@@ -489,10 +409,10 @@ if (cohort == "SEA_AD") {
   }
 }
 
-## For MIT_ROSMAP / ROSMAP, fsex already defined in clinical; align filtered if needed
-if (cohort == "MIT_ROSMAP" || cohort == "ROSMAP") {
+## Check the sex variable after alignment.
+if (clinical_format == "cogdx") {
   if (!"fsex" %in% colnames(clinical_filtered)) {
-    stop("fsex is missing in clinical_filtered for cohort: ", cohort)
+    stop("fsex is missing in clinical_filtered")
   }
 }
 
@@ -506,10 +426,9 @@ if (analysis == "pheno") {
     clinical_filtered = clinical_filtered,
     covariates_base   = covariates_base,
     tests             = tests,
-    cohort            = cohort,
-    celltype          = celltype,
+    outprefix         = outprefix,
+    nonoverlapping_samples_file = nonoverlapping_samples_file,
     pheno_definition  = pheno_definition,
-    dir_base          = dir_base,
     adjust_batch      = adjust_batch
   )
 } else if (analysis == "sex") {
@@ -518,9 +437,8 @@ if (analysis == "pheno") {
     clinical_filtered = clinical_filtered,
     covariates_base   = covariates_base,
     tests             = tests,
-    cohort            = cohort,
-    celltype          = celltype,
-    dir_base          = dir_base,
+    outprefix         = outprefix,
+    nonoverlapping_samples_file = nonoverlapping_samples_file,
     adjust_batch      = adjust_batch
   )
 }
